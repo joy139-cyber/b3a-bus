@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="B3A">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ffd400'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='16' font-weight='700' text-anchor='middle' fill='%23111111'%3EB3%3C/text%3E%3C/svg%3E">
+<title>B3A · 富泰邨 ⇄ 深圳灣口岸</title>
+<style>
+  :root{
+    --bg:#0a0c10;
+    --panel:#141920;
+    --panel-hi:#1b222c;
+    --line:#252d38;
+    --fg:#eef3f9;
+    --dim:#8b98a9;
+    --accent:#ffd400;
+    --warn:#ff9f43;
+    --err:#ff6b6b;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; padding:24px;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(900px 460px at 50% -10%, #1a2735 0%, transparent 70%),
+      var(--bg);
+    color:var(--fg);
+    font:16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+         "Noto Sans HK", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{width:min(660px,100%)}
+
+  /* ---------- header ---------- */
+  .head{display:flex; gap:16px; align-items:center; margin-bottom:8px}
+  .badge{
+    flex:none; display:grid; place-items:center;
+    min-width:78px; padding:10px 12px;
+    background:var(--accent); color:#111;
+    border-radius:12px;
+    font-weight:800; font-size:26px; letter-spacing:.5px;
+    box-shadow:0 6px 20px rgba(255,212,0,.16);
+  }
+  h1{margin:0; font-size:20px; font-weight:700; letter-spacing:.2px}
+  .route{margin:4px 0 0; font-size:13px; color:var(--dim)}
+  .arw{color:var(--accent); padding:0 2px}
+
+  /* ---------- sections ---------- */
+  .sec{margin-top:26px}
+  .sec-head{margin:0 2px 10px}
+  .sec-title{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .tag{
+    flex:none;
+    font-size:11px; font-weight:700; letter-spacing:.3px;
+    color:#111; background:var(--accent);
+    border-radius:999px; padding:2px 9px;
+  }
+  .tag.back{background:#2f3a49; color:#dbe4ef}
+  .sec-route{font-size:15px; font-weight:650}
+  .sec-note{margin-top:3px; font-size:11.5px; color:var(--dim)}
+
+  /* ---------- board ---------- */
+  .board{display:grid; gap:10px}
+  .card{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:16px 20px;
+    background:linear-gradient(180deg, var(--panel-hi), var(--panel));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+  .card.soon{border-color:rgba(255,212,0,.45)}
+  .num-wrap{display:flex; align-items:baseline; gap:8px; min-width:0}
+  .num{
+    font-size:46px; line-height:1; font-weight:750;
+    font-variant-numeric:tabular-nums; letter-spacing:-1px;
+  }
+  .num.due{font-size:32px; letter-spacing:0}
+  .unit{font-size:15px; color:var(--dim)}
+  .meta{text-align:right; min-width:0}
+  .clock{font-size:15px; font-variant-numeric:tabular-nums; color:#c9d3e0}
+  .note{font-size:13px; color:var(--dim); margin-top:2px}
+  .note.warn{color:var(--warn)}
+
+  .card.placeholder{display:block; text-align:center; padding:26px 20px; color:var(--dim)}
+  .card.placeholder .msg{font-size:15px; color:#c9d3e0; margin-bottom:5px}
+  .card.placeholder .sub{font-size:12.5px}
+
+  /* ---------- status ---------- */
+  .status{
+    margin:10px 2px 0; font-size:12.5px; color:var(--dim);
+    min-height:19px; display:flex; align-items:center; gap:8px;
+  }
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--dim); flex:none}
+  .dot.live{background:var(--accent)}
+  .dot.err{background:var(--err)}
+  .dot.warn{background:var(--warn)}
+
+  /* ---------- footer ---------- */
+  .foot{margin-top:26px; padding-top:16px; border-top:1px solid var(--line)}
+  .bar{height:3px; border-radius:3px; background:#1d232c; overflow:hidden}
+  .bar i{display:block; height:100%; width:0; background:var(--accent); transition:width .3s linear}
+  .src{margin:12px 0 0; font-size:12px; color:var(--dim); line-height:1.9}
+  .src code{background:#1d232c; border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:12px}
+  .src a{color:#c9d3e0; text-decoration:none; border-bottom:1px dotted var(--line)}
+  .src a:hover{color:var(--accent); border-bottom-color:var(--accent)}
+  button.linkbtn{
+    background:none; border:0; padding:0; margin:0;
+    color:#c9d3e0; font:inherit; font-size:12px;
+    text-decoration:underline; text-underline-offset:3px; cursor:pointer;
+  }
+  button.linkbtn:hover{color:var(--accent)}
+  button.linkbtn[disabled]{color:var(--dim); cursor:default; text-decoration:none}
+
+  @media (max-width:430px){
+    body{padding:16px}
+    .badge{min-width:64px; font-size:22px; padding:8px 10px}
+    h1{font-size:17px}
+    .num{font-size:40px}
+    .card{padding:14px 16px}
+    .sec{margin-top:22px}
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div class="badge">B3A</div>
+    <div>
+      <h1>富泰邨 <span class="arw">&hArr;</span> 深圳灣口岸</h1>
+      <p class="route">Real-time arrivals · Citybus open data · 每 30 秒自動更新</p>
+    </div>
+  </header>
+
+  <div id="sections"></div>
+
+  <footer class="foot">
+    <div class="bar"><i id="bar"></i></div>
+    <p class="src">
+      Live Citybus ETA open data ·
+      <a href="https://data.gov.hk/en/help/api-spec" target="_blank" rel="noopener">DATA.GOV.HK</a> ·
+      route <code>B3A</code> · dirs <code>O</code> / <code>I</code><br>
+      Feed updated <span id="feedTime">–</span> HKT ·
+      <button id="refresh" class="linkbtn" type="button">refresh now</button>
+    </p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     B3A · Citybus open data (DATA.GOV.HK)
+       outbound "O": 富泰邨 (003261)        → 深圳灣口岸 (003208, terminus)
+       inbound  "I": 深圳灣口岸 (003208)    → 富泰 (alight 003262 富泰商場)
+     At the terminus the feed returns BOTH directions, so every board
+     filters on `dir` — otherwise you would see arriving buses instead
+     of departing ones.
+  ------------------------------------------------------------------ */
+  const API        = "https://rt.data.gov.hk/v2/transport/citybus";
+  const COMPANY    = "CTB";
+  const ROUTE      = "B3A";
+  const REFRESH_MS = 30000;
+  const MAX_CARDS  = 3;
+
+  const CONFIG = [
+    {
+      key: "out", dir: "O", stop: "003261",
+      tag: "去程", tagClass: "tag",
+      route: "富泰邨 → 深圳灣口岸",
+      note: "上車 003261 富泰邨, 青山公路 · Fu Tai Estate",
+    },
+    {
+      key: "in", dir: "I", stop: "003208",
+      tag: "回程", tagClass: "tag back",
+      route: "深圳灣口岸 → 富泰",
+      note: "上車 003208 深圳灣口岸 · 落車 003262 富泰商場",
+    },
+  ];
+
+  const clock = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Hong_Kong"
+  });
+  const clockSec = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Asia/Hong_Kong"
+  });
+
+  const el = {
+    sections: document.getElementById("sections"),
+    bar:      document.getElementById("bar"),
+    feed:     document.getElementById("feedTime"),
+    refresh:  document.getElementById("refresh"),
+  };
+
+  const skew = { ms: 0 };                 // client clock − server clock (shared feed)
+  const now = () => Date.now() - skew.ms;
+
+  const boards = CONFIG.map(cfg => ({
+    cfg, etas: [], nodes: [], builtKey: null,
+    loading: false, error: null, lastOkAt: 0, feedMs: NaN, el: null,
+  }));
+
+  let nextAllAt = 0;                      // when the next round of fetches fires
+
+  /* --------------------------- build the DOM --------------------------- */
+  const frag = document.createDocumentFragment();
+
+  boards.forEach(b => {
+    const sec = document.createElement("section");
+    sec.className = "sec";
+
+    const head = document.createElement("div");
+    head.className = "sec-head";
+    const title = document.createElement("div");
+    title.className = "sec-title";
+    const tag = document.createElement("span");
+    tag.className = b.cfg.tagClass;
+    tag.textContent = b.cfg.tag;
+    const rt = document.createElement("span");
+    rt.className = "sec-route";
+    rt.textContent = b.cfg.route;
+    title.append(tag, rt);
+    const note = document.createElement("div");
+    note.className = "sec-note";
+    note.textContent = b.cfg.note;
+    head.append(title, note);
+
+    const board = document.createElement("div");
+    board.className = "board";
+
+    const status = document.createElement("p");
+    status.className = "status";
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const txt = document.createElement("span");
+    status.append(dot, txt);
+
+    sec.append(head, board, status);
+    frag.append(sec);
+
+    b.el = { board, dot, txt };
+  });
+
+  el.sections.append(frag);
+
+  /* ----------------------------- fetching ----------------------------- */
+  function loadBoard(b) {
+    if (b.loading) return;
+    b.loading = true;
+
+    const url = `${API}/eta/${COMPANY}/${b.cfg.stop}/${ROUTE}`;
+
+    return fetch(url, { cache: "no-store", headers: { accept: "application/json" } })
+      .then(res => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(json => {
+        const genMs = Date.parse(json.generated_timestamp);
+        if (Number.isFinite(genMs)) skew.ms = Date.now() - genMs;
+
+        const rows = Array.isArray(json.data) ? json.data : [];
+
+        b.etas = rows
+          .filter(r => r.dir === b.cfg.dir && r.eta)
+          .map(r => ({
+            etaMs: Date.parse(r.eta),
+            seq:   Number(r.eta_seq) || 0,
+            rmk:   r.rmk_en || r.rmk_tc || "",
+          }))
+          .filter(r => Number.isFinite(r.etaMs))
+          .sort((x, y) => x.etaMs - y.etaMs)
+          .slice(0, MAX_CARDS);
+
+        const feedMs = Date.parse(rows[0] && rows[0].data_timestamp);
+        b.feedMs = Number.isFinite(feedMs) ? feedMs : genMs;
+
+        b.lastOkAt = Date.now();
+        b.error = null;
+      })
+      .catch(err => {
+        b.error = (err && err.message) ? err.message : String(err);
+      })
+      .then(() => {
+        b.loading = false;
+        render();
+      });
+  }
+
+  function loadAll() {
+    nextAllAt = Date.now() + REFRESH_MS;
+    return Promise.all(boards.map(loadBoard));
+  }
+
+  /* ---------------------------- rendering ---------------------------- */
+  const minutesLeft = etaMs => (etaMs - now()) / 60000;
+  const upcoming = b => b.etas.filter(e => minutesLeft(e.etaMs) > -1);   // drop buses that already left
+  const secsLeft = () => Math.max(0, Math.ceil((nextAllAt - Date.now()) / 1000));
+
+  function agoText(at) {
+    if (!at) return "–";
+    const s = Math.max(0, Math.round((Date.now() - at) / 1000));
+    return s < 60 ? s + "s" : Math.floor(s / 60) + "m";
+  }
+
+  const LABELS = ["Next bus", "Following bus", "After that"];
+
+  function build(b, list) {
+    b.nodes = [];
+    b.el.board.replaceChildren();
+
+    if (!list.length) {
+      const connecting = b.loading && !b.lastOkAt;
+      const card = document.createElement("article");
+      card.className = "card placeholder";
+
+      const msg = document.createElement("div");
+      msg.className = "msg";
+      msg.textContent = connecting
+        ? "Connecting to Citybus…"
+        : (b.error ? "Live data unavailable" : "No upcoming buses");
+
+      const sub = document.createElement("div");
+      sub.className = "sub";
+      sub.textContent = connecting
+        ? "Fetching the next B3A departures."
+        : (b.error
+            ? "The Citybus open-data feed could not be reached. Retrying automatically."
+            : "B3A may not be running in this direction at this hour.");
+
+      card.append(msg, sub);
+      b.el.board.append(card);
+      return;
+    }
+
+    list.forEach((e, i) => {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const numWrap = document.createElement("div");
+      numWrap.className = "num-wrap";
+      const num = document.createElement("span");
+      num.className = "num";
+      const unit = document.createElement("span");
+      unit.className = "unit";
+      numWrap.append(num, unit);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const c = document.createElement("div");
+      c.className = "clock";
+      const note = document.createElement("div");
+      note.className = "note";
+      meta.append(c, note);
+
+      card.append(numWrap, meta);
+      b.el.board.append(card);
+      b.nodes.push({ card, num, unit, clock: c, note, eta: e, label: LABELS[i] || "Later bus" });
+    });
+  }
+
+  function paint(b, list) {
+    const key = list.map(e => e.etaMs + "|" + e.seq).join(",");
+    if (key !== b.builtKey) { build(b, list); b.builtKey = key; }
+
+    list.forEach((e, i) => {
+      const n = b.nodes[i];
+      if (!n) return;
+      const mins = minutesLeft(e.etaMs);
+      const due = mins <= 0.5;
+
+      n.num.textContent = due ? "Due" : String(Math.floor(mins));
+      n.num.className = due ? "num due" : "num";
+      n.unit.textContent = due ? "" : "min";
+      n.clock.textContent = "at " + clock.format(new Date(e.etaMs));
+      n.note.className = e.rmk ? "note warn" : "note";
+      n.note.textContent = [due ? "Arriving now · 即將到站" : n.label, e.rmk].filter(Boolean).join(" · ");
+      n.card.className = mins <= 3 ? "card soon" : "card";
+    });
+  }
+
+  function setStatus(b, list) {
+    let txt, cls = "dot";
+    if (b.loading && !b.lastOkAt) {
+      txt = "Connecting to Citybus…";
+      cls = "dot live";
+    } else if (b.error && !b.lastOkAt) {
+      txt = "Live data unavailable (" + b.error + ") — retrying in " + secsLeft() + "s";
+      cls = "dot err";
+    } else if (b.error) {
+      txt = "Offline — showing last update. Retrying in " + secsLeft() + "s";
+      cls = "dot warn";
+    } else if (!list.length) {
+      txt = "No upcoming buses · next check in " + secsLeft() + "s";
+      cls = "dot";
+    } else {
+      txt = "Updated " + agoText(b.lastOkAt) + " ago · refreshing in " + secsLeft() + "s";
+      cls = "dot live";
+    }
+    b.el.dot.className = cls;
+    b.el.txt.textContent = txt;
+  }
+
+  function render() {
+    let newestFeed = NaN;
+
+    boards.forEach(b => {
+      const list = upcoming(b);
+      paint(b, list);
+      setStatus(b, list);
+      if (Number.isFinite(b.feedMs)) newestFeed = Math.max(Number.isFinite(newestFeed) ? newestFeed : -Infinity, b.feedMs);
+    });
+
+    el.feed.textContent = Number.isFinite(newestFeed) ? clockSec.format(new Date(newestFeed)) : "–";
+
+    const left = nextAllAt - Date.now();
+    el.bar.style.width = (100 - Math.max(0, Math.min(1, left / REFRESH_MS)) * 100).toFixed(1) + "%";
+  }
+
+  /* ------------------------------ wiring ------------------------------ */
+  el.refresh.addEventListener("click", () => {
+    el.refresh.disabled = true;
+    loadAll().then(() => { el.refresh.disabled = false; });
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && boards.some(b => Date.now() - b.lastOkAt > REFRESH_MS)) loadAll();
+  });
+
+  loadAll();                            // first fetch, both directions
+  setInterval(loadAll, REFRESH_MS);     // re-poll every 30 s
+  setInterval(render, 1000);            // tick the countdowns locally
+})();
+</script>
+</body>
+</html>
