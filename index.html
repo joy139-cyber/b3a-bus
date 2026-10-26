@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,6 +35,7 @@
     font:16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI",
          "Noto Sans HK", "PingFang HK", "Microsoft JhengHei", sans-serif;
     -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:contain;
   }
   main{width:min(660px,100%)}
 
@@ -52,6 +53,23 @@
   .route{margin:4px 0 0; font-size:13px; color:var(--dim)}
   .arw{color:var(--accent); padding:0 2px}
 
+  /* ---------- toolbar ---------- */
+  .tools{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+  .tool{
+    appearance:none; -webkit-appearance:none;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:7px 12px; border-radius:999px;
+    border:1px solid var(--line); background:var(--panel);
+    color:#c9d3e0; font:inherit; font-size:12.5px; line-height:1;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .tool:active{background:var(--panel-hi)}
+  .tool[aria-pressed="true"]{
+    border-color:rgba(255,212,0,.55); color:var(--accent);
+    background:rgba(255,212,0,.08);
+  }
+  .tool .glyph{font-size:13px; line-height:1}
+
   /* ---------- sections ---------- */
   .sec{margin-top:26px}
   .sec-head{margin:0 2px 10px}
@@ -65,6 +83,19 @@
   .tag.back{background:#2f3a49; color:#dbe4ef}
   .sec-route{font-size:15px; font-weight:650}
   .sec-note{margin-top:3px; font-size:11.5px; color:var(--dim)}
+
+  /* ---------- chips (回程 filter) ---------- */
+  .chips{display:flex; gap:7px; flex-wrap:wrap; margin:0 0 10px}
+  .chip{
+    appearance:none; -webkit-appearance:none;
+    padding:5px 11px; border-radius:999px;
+    border:1px solid var(--line); background:transparent;
+    color:var(--dim); font:inherit; font-size:12px; font-weight:650;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .chip[aria-pressed="true"]{
+    color:#111; background:var(--accent); border-color:var(--accent);
+  }
 
   /* ---------- board ---------- */
   .board{display:grid; gap:10px}
@@ -83,10 +114,19 @@
   }
   .num.due{font-size:32px; letter-spacing:0}
   .unit{font-size:15px; color:var(--dim)}
+  .rtb{
+    flex:none; align-self:center;
+    font-size:11.5px; font-weight:800; letter-spacing:.3px;
+    color:var(--accent); background:rgba(255,212,0,.1);
+    border:1px solid rgba(255,212,0,.3); border-radius:7px;
+    padding:2px 6px; margin-right:2px;
+  }
   .meta{text-align:right; min-width:0}
   .clock{font-size:15px; font-variant-numeric:tabular-nums; color:#c9d3e0}
   .note{font-size:13px; color:var(--dim); margin-top:2px}
   .note.warn{color:var(--warn)}
+  .arrive{font-size:12px; color:var(--dim); margin-top:3px; font-variant-numeric:tabular-nums}
+  .arrive b{color:#c9d3e0; font-weight:650}
 
   .card.placeholder{display:block; text-align:center; padding:26px 20px; color:var(--dim)}
   .card.placeholder .msg{font-size:15px; color:#c9d3e0; margin-bottom:5px}
@@ -118,6 +158,33 @@
   button.linkbtn:hover{color:var(--accent)}
   button.linkbtn[disabled]{color:var(--dim); cursor:default; text-decoration:none}
 
+  /* ---------- pull to refresh ---------- */
+  .ptr{
+    position:fixed; top:0; left:0; right:0; height:0;
+    display:flex; align-items:flex-end; justify-content:center;
+    background:linear-gradient(180deg, rgba(255,212,0,.16), transparent);
+    overflow:hidden; pointer-events:none; z-index:20;
+    transition:height .18s ease-out;
+  }
+  .ptr span{
+    font-size:11.5px; color:var(--accent); padding-bottom:7px;
+    font-weight:650; letter-spacing:.3px;
+  }
+
+  /* ---------- alert banner ---------- */
+  .banner{
+    position:fixed; left:50%; bottom:20px; transform:translate(-50%, 130%);
+    max-width:min(560px, calc(100% - 32px));
+    padding:11px 16px; border-radius:14px;
+    background:#1d232c; border:1px solid rgba(255,212,0,.45);
+    color:var(--fg); font-size:13.5px; line-height:1.45;
+    box-shadow:0 12px 34px rgba(0,0,0,.5);
+    transition:transform .28s cubic-bezier(.2,.9,.3,1);
+    z-index:30; pointer-events:none;
+  }
+  .banner.show{transform:translate(-50%, 0)}
+  .banner b{color:var(--accent)}
+
   @media (max-width:430px){
     body{padding:16px}
     .badge{min-width:64px; font-size:22px; padding:8px 10px}
@@ -126,9 +193,22 @@
     .card{padding:14px 16px}
     .sec{margin-top:22px}
   }
+
+  /* ---------- large text mode ---------- */
+  html[data-text="lg"] .num{font-size:64px}
+  html[data-text="lg"] .num.due{font-size:44px}
+  html[data-text="lg"] .unit{font-size:18px}
+  html[data-text="lg"] .clock{font-size:18px}
+  html[data-text="lg"] .note{font-size:15px}
+  html[data-text="lg"] .arrive{font-size:14px}
+  html[data-text="lg"] .card{padding:20px 22px}
+  @media (max-width:430px){
+    html[data-text="lg"] .num{font-size:54px}
+  }
 </style>
 </head>
 <body>
+<div class="ptr" id="ptr" aria-hidden="true"><span id="ptrText">下拉刷新</span></div>
 <main>
   <header class="head">
     <div class="badge">B3A</div>
@@ -137,6 +217,15 @@
       <p class="route">Real-time arrivals · Citybus open data · 每 30 秒自動更新</p>
     </div>
   </header>
+
+  <div class="tools">
+    <button id="bigBtn" class="tool" type="button" aria-pressed="false">
+      <span class="glyph">A</span><span id="bigLabel">大字</span>
+    </button>
+    <button id="alertBtn" class="tool" type="button" aria-pressed="false">
+      <span class="glyph">🔔</span><span id="alertLabel">提醒關閉</span>
+    </button>
+  </div>
 
   <div id="sections"></div>
 
@@ -152,37 +241,72 @@
   </footer>
 </main>
 
+<div class="banner" id="banner" role="status" aria-live="polite"></div>
+
 <script>
 (() => {
   "use strict";
 
   /* ------------------------------------------------------------------
      B3A · Citybus open data (DATA.GOV.HK)
-       outbound "O": 富泰邨 (003261)        → 深圳灣口岸 (003208, terminus)
-       inbound  "I": 深圳灣口岸 (003208)    → 富泰 (alight 003262 富泰商場)
-     At the terminus the feed returns BOTH directions, so every board
-     filters on `dir` — otherwise you would see arriving buses instead
-     of departing ones.
-  ------------------------------------------------------------------ */
+
+     富泰邨 只由 B3A 服務（003261 去程上車 / 003262 回程落車）。
+     B3 / B3X / B3M 不停富泰邨，所以只在「回程」一併顯示，
+     讓同學在深圳灣口岸比較哪一班最快開出。
+
+     站點與方向都對過 route-stop 開放數據，不要憑記憶改：
+       003261  富泰邨, 青山公路      B3A outbound seq 14
+       003208  深圳灣口岸            B3A outbound seq 15 = terminus
+       003208  深圳灣口岸            B3A inbound  seq 1  = 回程上車
+       003262  富泰商場, 青山公路    B3A inbound  seq 2  = 回程落車
+
+     口岸站的 ETA 會同時回傳兩個方向，所以每張板都按 dir 過濾。
+     eta_seq 是同一班車在各站的序號，用它把「上車」和「到站」配對。
+     ------------------------------------------------------------------ */
+
   const API        = "https://rt.data.gov.hk/v2/transport/citybus";
   const COMPANY    = "CTB";
-  const ROUTE      = "B3A";
   const REFRESH_MS = 30000;
-  const MAX_CARDS  = 3;
+  const MAX_OUT    = 3;   // 去程：同一條線，3 班夠
+  const MAX_RET    = 4;   // 回程：跨線合併，多留一班
+  const CACHE_KEY  = "b3a.cache.v2";
+  const PREF_KEY   = "b3a.prefs.v1";
 
-  const CONFIG = [
-    {
-      key: "out", dir: "O", stop: "003261",
-      tag: "去程", tagClass: "tag",
-      route: "富泰邨 → 深圳灣口岸",
-      note: "上車 003261 富泰邨, 青山公路 · Fu Tai Estate",
+  /* 線路表：加線只需加一筆，UI 與抓取都不用改。
+     arm = 該方向在口岸的落車站（用來顯示「幾點到」），沒有就不顯示。 */
+  const ROUTES = {
+    B3A: {
+      no: "B3A",
+      out: { stop: "003261", dir: "O", arm: { stop: "003208", dir: "O", name: "深圳灣口岸" } },
+      ret: { stop: "003208", dir: "I", arm: { stop: "003262", dir: "I", name: "富泰商場" } },
     },
-    {
-      key: "in", dir: "I", stop: "003208",
-      tag: "回程", tagClass: "tag back",
-      route: "深圳灣口岸 → 富泰",
-      note: "上車 003208 深圳灣口岸 · 落車 003262 富泰商場",
+    B3: {
+      no: "B3",
+      ret: { stop: "003208", dir: "I", arm: null },
     },
+    B3X: {
+      no: "B3X",
+      ret: { stop: "003208", dir: "I", arm: null },
+    },
+    B3M: {
+      // 循環線：route-stop 只有 outbound，而且目前口岸站常常回傳 0 筆。
+      // 有資料時 seq 1 就是由口岸開出，沒資料就自然不出現。
+      no: "B3M",
+      ret: { stop: "003208", dir: "O", arm: null },
+    },
+  };
+
+  const RET_ORDER = ["B3A", "B3", "B3X", "B3M"];
+
+  /* 要抓的 (站, 路線) 組合。同一筆 003208/B3A 同時供應
+     「去程到站時間」和「回程 B3A 開出時間」，所以不必重複抓。 */
+  const FEED_LIST = [
+    { stop: "003261", route: "B3A" },   // 去程開出
+    { stop: "003208", route: "B3A" },   // 去程到站 + 回程開出
+    { stop: "003262", route: "B3A" },   // 回程到站
+    { stop: "003208", route: "B3"  },
+    { stop: "003208", route: "B3X" },
+    { stop: "003208", route: "B3M" },
   ];
 
   const clock = new Intl.DateTimeFormat("en-GB", {
@@ -197,22 +321,82 @@
     bar:      document.getElementById("bar"),
     feed:     document.getElementById("feedTime"),
     refresh:  document.getElementById("refresh"),
+    bigBtn:   document.getElementById("bigBtn"),
+    bigLabel: document.getElementById("bigLabel"),
+    alertBtn: document.getElementById("alertBtn"),
+    alertLabel: document.getElementById("alertLabel"),
+    banner:   document.getElementById("banner"),
+    ptr:      document.getElementById("ptr"),
+    ptrText:  document.getElementById("ptrText"),
   };
 
-  const skew = { ms: 0 };                 // client clock − server clock (shared feed)
+  /* ------------------------------ prefs ------------------------------ */
+  const prefs = (() => {
+    const base = { big: false, alertMins: 0, filter: "ALL" };
+    try {
+      const raw = JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
+      return Object.assign(base, raw);
+    } catch { return base; }
+  })();
+
+  function savePrefs() {
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
+  }
+
+  /* ------------------------------ cache ------------------------------ */
+  /* 只存渲染需要的最小欄位，避免 localStorage 塞爆。 */
+  const cache = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "{}") || {}; }
+    catch { return {}; }
+  })();
+
+  function saveCache() {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch {}
+  }
+
+  const keyOf = f => f.stop + "|" + f.route;
+
+  /* ------------------------------ state ------------------------------ */
+  const feeds = new Map();   // key -> { stop, route, rows, okAt, liveAt, error, loading }
+
+  FEED_LIST.forEach(f => {
+    const key = keyOf(f);
+    const hit = cache[key];
+    feeds.set(key, {
+      stop: f.stop, route: f.route,
+      rows: Array.isArray(hit && hit.rows) ? hit.rows : [],
+      okAt: hit && hit.at ? hit.at : 0,
+      liveAt: 0,
+      error: null,
+      loading: false,
+    });
+  });
+
+  const skew = { ms: 0 };                 // client clock − server clock
   const now = () => Date.now() - skew.ms;
 
-  const boards = CONFIG.map(cfg => ({
-    cfg, etas: [], nodes: [], builtKey: null,
-    loading: false, error: null, lastOkAt: 0, feedMs: NaN, el: null,
-  }));
-
-  let nextAllAt = 0;                      // when the next round of fetches fires
+  let nextAllAt = 0;
+  let busy = false;
 
   /* --------------------------- build the DOM --------------------------- */
+  const VIEWS = {
+    out: {
+      key: "out", tag: "去程", tagClass: "tag",
+      title: "富泰邨 → 深圳灣口岸",
+      note: "上車 003261 富泰邨, 青山公路 · 只有 B3A 停富泰邨",
+      chips: false,
+    },
+    ret: {
+      key: "ret", tag: "回程", tagClass: "tag back",
+      title: "深圳灣口岸 → 屯門",
+      note: "口岸開出 · B3A 可直達富泰商場，其餘路線到屯門後再轉車",
+      chips: true,
+    },
+  };
+
   const frag = document.createDocumentFragment();
 
-  boards.forEach(b => {
+  Object.values(VIEWS).forEach(v => {
     const sec = document.createElement("section");
     sec.className = "sec";
 
@@ -221,41 +405,59 @@
     const title = document.createElement("div");
     title.className = "sec-title";
     const tag = document.createElement("span");
-    tag.className = b.cfg.tagClass;
-    tag.textContent = b.cfg.tag;
+    tag.className = v.tagClass;
+    tag.textContent = v.tag;
     const rt = document.createElement("span");
     rt.className = "sec-route";
-    rt.textContent = b.cfg.route;
+    rt.textContent = v.title;
     title.append(tag, rt);
     const note = document.createElement("div");
     note.className = "sec-note";
-    note.textContent = b.cfg.note;
+    note.textContent = v.note;
     head.append(title, note);
+
+    let chipRow = null;
+    if (v.chips) {
+      chipRow = document.createElement("div");
+      chipRow.className = "chips";
+      ["ALL", ...RET_ORDER].forEach(id => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.dataset.id = id;
+        b.textContent = id === "ALL" ? "全部" : id;
+        chipRow.append(b);
+      });
+    }
 
     const board = document.createElement("div");
     board.className = "board";
 
     const status = document.createElement("p");
     status.className = "status";
+    status.setAttribute("aria-live", "polite");
     const dot = document.createElement("span");
     dot.className = "dot";
     const txt = document.createElement("span");
     status.append(dot, txt);
 
-    sec.append(head, board, status);
+    if (chipRow) sec.append(head, chipRow, board, status);
+    else sec.append(head, board, status);
     frag.append(sec);
 
-    b.el = { board, dot, txt };
+    v.el = { board, dot, txt, chipRow };
+    v.nodes = [];
+    v.builtKey = "";
   });
 
   el.sections.append(frag);
 
   /* ----------------------------- fetching ----------------------------- */
-  function loadBoard(b) {
-    if (b.loading) return;
-    b.loading = true;
+  function loadFeed(f) {
+    if (f.loading) return Promise.resolve();
+    f.loading = true;
 
-    const url = `${API}/eta/${COMPANY}/${b.cfg.stop}/${ROUTE}`;
+    const url = `${API}/eta/${COMPANY}/${f.stop}/${f.route}`;
 
     return fetch(url, { cache: "no-store", headers: { accept: "application/json" } })
       .then(res => {
@@ -268,40 +470,59 @@
 
         const rows = Array.isArray(json.data) ? json.data : [];
 
-        b.etas = rows
-          .filter(r => r.dir === b.cfg.dir && r.eta)
+        f.rows = rows
+          .filter(r => r.eta)
           .map(r => ({
-            etaMs: Date.parse(r.eta),
+            route: r.route || f.route,
+            dir:   r.dir,
             seq:   Number(r.eta_seq) || 0,
-            rmk:   r.rmk_en || r.rmk_tc || "",
+            ms:    Date.parse(r.eta),
+            rmk:   r.rmk_tc || r.rmk_en || "",
+            dest:  r.dest_tc || r.dest_en || "",
           }))
-          .filter(r => Number.isFinite(r.etaMs))
-          .sort((x, y) => x.etaMs - y.etaMs)
-          .slice(0, MAX_CARDS);
+          .filter(r => Number.isFinite(r.ms));
 
-        const feedMs = Date.parse(rows[0] && rows[0].data_timestamp);
-        b.feedMs = Number.isFinite(feedMs) ? feedMs : genMs;
+        f.liveAt = Date.now();
+        f.okAt = f.liveAt;
+        f.error = null;
 
-        b.lastOkAt = Date.now();
-        b.error = null;
+        cache[keyOf(f)] = {
+          at: f.okAt,
+          rows: f.rows.map(r => [r.route, r.dir, r.seq, r.ms, r.rmk, r.dest]),
+        };
       })
       .catch(err => {
-        b.error = (err && err.message) ? err.message : String(err);
+        f.error = (err && err.message) ? err.message : String(err);
       })
       .then(() => {
-        b.loading = false;
+        f.loading = false;
         render();
       });
   }
 
+  /* 從 localStorage 還原的快取是壓縮過的陣列，這裡展開回物件。 */
+  Object.values(cache).forEach(entry => {
+    if (!entry || !Array.isArray(entry.rows)) return;
+    entry.rows = entry.rows.map(a => ({
+      route: a[0], dir: a[1], seq: a[2], ms: a[3], rmk: a[4] || "", dest: a[5] || "",
+    }));
+  });
+  feeds.forEach(f => {
+    const hit = cache[keyOf(f)];
+    if (hit && Array.isArray(hit.rows)) f.rows = hit.rows;
+  });
+
   function loadAll() {
     nextAllAt = Date.now() + REFRESH_MS;
-    return Promise.all(boards.map(loadBoard));
+    if (busy) return Promise.resolve();
+    busy = true;
+    return Promise.all([...feeds.values()].map(loadFeed))
+      .then(() => { saveCache(); })
+      .then(() => { busy = false; });
   }
 
   /* ---------------------------- rendering ---------------------------- */
-  const minutesLeft = etaMs => (etaMs - now()) / 60000;
-  const upcoming = b => b.etas.filter(e => minutesLeft(e.etaMs) > -1);   // drop buses that already left
+  const minutesLeft = ms => (ms - now()) / 60000;
   const secsLeft = () => Math.max(0, Math.ceil((nextAllAt - Date.now()) / 1000));
 
   function agoText(at) {
@@ -310,34 +531,87 @@
     return s < 60 ? s + "s" : Math.floor(s / 60) + "m";
   }
 
-  const LABELS = ["Next bus", "Following bus", "After that"];
+  const hkHour = () => Number(new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", hour12: false, timeZone: "Asia/Hong_Kong",
+  }).format(new Date()));
 
-  function build(b, list) {
-    b.nodes = [];
-    b.el.board.replaceChildren();
+  function feedOf(stop, route) {
+    return feeds.get(stop + "|" + route) || null;
+  }
+
+  /* 某站在某線某方向的所有班次，去掉已開出的（> -1 分鐘仍保留，顯示 Due）。 */
+  function rowsAt(stop, route, dir) {
+    const f = feedOf(stop, route);
+    if (!f || !f.rows) return [];
+    return f.rows.filter(r => r.dir === dir);
+  }
+
+  /* eta_seq 只是「該站第幾班」，不是班次身分；seq↔seq 直接配對會出現
+     「到站時間早於開出時間」。改用時間窗：同一班車要到落車站，至少
+     要 MIN_TRAVEL 分鐘之後，且不超過 MAX_TRAVEL 分鐘；每個到站時間
+     只會被用一次，避免兩班車搶同一個到達時間。 */
+  const MIN_TRAVEL = 6;
+  const MAX_TRAVEL = 45;
+
+  function matchArrivals(deps, arrRows, armCfg) {
+    const pool = arrRows.map(r => r.ms).sort((a, b) => a - b);
+    const used = new Set();
+
+    return deps.map(d => {
+      for (const t of pool) {
+        if (used.has(t)) continue;
+        const mins = (t - d.ms) / 60000;
+        if (mins < MIN_TRAVEL) continue;
+        if (mins > MAX_TRAVEL) break;
+        used.add(t);
+        return { name: armCfg.name, ms: t };
+      }
+      return null;
+    });
+  }
+
+  function legList(routeId, leg, max, withDest) {
+    const cfg = ROUTES[routeId] && ROUTES[routeId][leg];
+    if (!cfg) return [];
+
+    const deps = rowsAt(cfg.stop, routeId, cfg.dir)
+      .sort((a, b) => a.ms - b.ms)
+      .filter(r => minutesLeft(r.ms) > -1)
+      .slice(0, max);
+
+    const arrivals = cfg.arm
+      ? matchArrivals(deps, rowsAt(cfg.arm.stop, routeId, cfg.arm.dir), cfg.arm)
+      : deps.map(() => null);
+
+    return deps.map((r, i) => ({
+      route: routeId,
+      dest: withDest ? r.dest : "",
+      ms: r.ms,
+      seq: r.seq,
+      rmk: r.rmk,
+      arrive: arrivals[i],
+    }));
+  }
+
+  function outboundList() {
+    return legList("B3A", "out", MAX_OUT, false);
+  }
+
+  function inboundList() {
+    const picked = prefs.filter === "ALL" ? RET_ORDER : [prefs.filter];
+    const out = [];
+    picked.forEach(id => { out.push(...legList(id, "ret", MAX_RET, true)); });
+    return out.sort((a, b) => a.ms - b.ms).slice(0, MAX_RET);
+  }
+
+  const LABELS = ["Next bus", "Following bus", "After that", "Then"];
+
+  function build(view, list, showRoute) {
+    view.nodes = [];
+    view.el.board.replaceChildren();
 
     if (!list.length) {
-      const connecting = b.loading && !b.lastOkAt;
-      const card = document.createElement("article");
-      card.className = "card placeholder";
-
-      const msg = document.createElement("div");
-      msg.className = "msg";
-      msg.textContent = connecting
-        ? "Connecting to Citybus…"
-        : (b.error ? "Live data unavailable" : "No upcoming buses");
-
-      const sub = document.createElement("div");
-      sub.className = "sub";
-      sub.textContent = connecting
-        ? "Fetching the next B3A departures."
-        : (b.error
-            ? "The Citybus open-data feed could not be reached. Retrying automatically."
-            : "B3A may not be running in this direction at this hour.");
-
-      card.append(msg, sub);
-      b.el.board.append(card);
-      return;
+      return;   // 空狀態交給 placeholder()，避免重複建卡
     }
 
     list.forEach((e, i) => {
@@ -346,10 +620,19 @@
 
       const numWrap = document.createElement("div");
       numWrap.className = "num-wrap";
+
+      let rtb = null;
+      if (showRoute) {
+        rtb = document.createElement("span");
+        rtb.className = "rtb";
+        rtb.textContent = e.route;
+      }
+
       const num = document.createElement("span");
       num.className = "num";
       const unit = document.createElement("span");
       unit.className = "unit";
+      if (rtb) numWrap.append(rtb);
       numWrap.append(num, unit);
 
       const meta = document.createElement("div");
@@ -358,85 +641,350 @@
       c.className = "clock";
       const note = document.createElement("div");
       note.className = "note";
-      meta.append(c, note);
+      const arrive = document.createElement("div");
+      arrive.className = "arrive";
+      meta.append(c, note, arrive);
 
       card.append(numWrap, meta);
-      b.el.board.append(card);
-      b.nodes.push({ card, num, unit, clock: c, note, eta: e, label: LABELS[i] || "Later bus" });
+      view.el.board.append(card);
+      view.nodes.push({
+        card, num, unit, clock: c, note, arrive,
+        eta: e, label: LABELS[i] || "Later bus",
+      });
     });
   }
 
-  function paint(b, list) {
-    const key = list.map(e => e.etaMs + "|" + e.seq).join(",");
-    if (key !== b.builtKey) { build(b, list); b.builtKey = key; }
+  function placeholder(view, msg, sub) {
+    view.nodes = [];
+    const card = document.createElement("article");
+    card.className = "card placeholder";
+    const m = document.createElement("div");
+    m.className = "msg";
+    m.textContent = msg;
+    const s = document.createElement("div");
+    s.className = "sub";
+    s.textContent = sub;
+    card.append(m, s);
+    view.el.board.replaceChildren(card);
+    view.builtKey = "empty:" + msg;
+  }
+
+  function paint(view, list, showRoute) {
+    if (!list.length) return;
+
+    const key = list.map(e => e.route + e.ms + "|" + e.seq).join(",");
+    if (key !== view.builtKey) { build(view, list, showRoute); view.builtKey = key; }
 
     list.forEach((e, i) => {
-      const n = b.nodes[i];
+      const n = view.nodes[i];
       if (!n) return;
-      const mins = minutesLeft(e.etaMs);
+      const mins = minutesLeft(e.ms);
       const due = mins <= 0.5;
 
       n.num.textContent = due ? "Due" : String(Math.floor(mins));
       n.num.className = due ? "num due" : "num";
       n.unit.textContent = due ? "" : "min";
-      n.clock.textContent = "at " + clock.format(new Date(e.etaMs));
+      n.clock.textContent = "at " + clock.format(new Date(e.ms));
+
+      const notes = [due ? "Arriving now · 即將到站" : n.label];
+      if (showRoute && e.dest) notes.push("往 " + e.dest);
+      if (e.rmk) notes.push(e.rmk);
       n.note.className = e.rmk ? "note warn" : "note";
-      n.note.textContent = [due ? "Arriving now · 即將到站" : n.label, e.rmk].filter(Boolean).join(" · ");
+      n.note.textContent = notes.filter(Boolean).join(" · ");
+
+      if (e.arrive) {
+        n.arrive.innerHTML = "";
+        n.arrive.append(
+          document.createTextNode("到" + e.arrive.name + " "),
+          Object.assign(document.createElement("b"), { textContent: clock.format(new Date(e.arrive.ms)) }),
+        );
+        n.arrive.style.display = "";
+      } else {
+        n.arrive.textContent = "";
+        n.arrive.style.display = "none";
+      }
+
       n.card.className = mins <= 3 ? "card soon" : "card";
     });
   }
 
-  function setStatus(b, list) {
-    let txt, cls = "dot";
-    if (b.loading && !b.lastOkAt) {
-      txt = "Connecting to Citybus…";
-      cls = "dot live";
-    } else if (b.error && !b.lastOkAt) {
-      txt = "Live data unavailable (" + b.error + ") — retrying in " + secsLeft() + "s";
-      cls = "dot err";
-    } else if (b.error) {
-      txt = "Offline — showing last update. Retrying in " + secsLeft() + "s";
-      cls = "dot warn";
-    } else if (!list.length) {
-      txt = "No upcoming buses · next check in " + secsLeft() + "s";
-      cls = "dot";
-    } else {
-      txt = "Updated " + agoText(b.lastOkAt) + " ago · refreshing in " + secsLeft() + "s";
-      cls = "dot live";
-    }
-    b.el.dot.className = cls;
-    b.el.txt.textContent = txt;
-  }
+  /* 整個 view 的抓取狀態：全部成功 / 有錯誤 / 仍在使用快取 */
+  function viewState(view) {
+    const ids = view.key === "out"
+      ? ["003261|B3A"]
+      : RET_ORDER.map(id => "003208|" + id);
 
-  function render() {
-    let newestFeed = NaN;
+    let any = false, allLive = true, err = null, newest = 0;
 
-    boards.forEach(b => {
-      const list = upcoming(b);
-      paint(b, list);
-      setStatus(b, list);
-      if (Number.isFinite(b.feedMs)) newestFeed = Math.max(Number.isFinite(newestFeed) ? newestFeed : -Infinity, b.feedMs);
+    ids.forEach(k => {
+      const f = feeds.get(k);
+      if (!f) return;
+      any = true;
+      if (!f.liveAt) allLive = false;
+      if (f.error && !err) err = f.error;
+      if (f.okAt > newest) newest = f.okAt;
     });
 
-    el.feed.textContent = Number.isFinite(newestFeed) ? clockSec.format(new Date(newestFeed)) : "–";
+    return { any, allLive, err, newest };
+  }
+
+  function emptyCopy() {
+    const h = hkHour();
+    if (h >= 23 || h < 5) {
+      return ["今日班次已開出完畢", "尾班車已過，明早再查。"];
+    }
+    return ["目前沒有預定班次", "可能暫停服務，或班次已全部開出。"];
+  }
+
+  function setStatus(view, list) {
+    const st = viewState(view);
+    let txt, cls = "dot";
+
+    if (st.err && !st.newest) {
+      txt = "無法連接 Citybus（" + st.err + "）— " + secsLeft() + " 秒後重試";
+      cls = "dot err";
+    } else if (st.err) {
+      txt = "連線中斷 — 顯示 " + agoText(st.newest) + " 前的資料，重試中";
+      cls = "dot warn";
+    } else if (!st.allLive && st.newest) {
+      txt = "顯示上次資料（" + agoText(st.newest) + "前）· 正在更新";
+      cls = "dot warn";
+    } else if (!st.allLive) {
+      txt = "連接 Citybus…";
+      cls = "dot live";
+    } else if (!list.length) {
+      txt = emptyCopy()[0] + " · " + secsLeft() + " 秒後再查";
+      cls = "dot";
+    } else {
+      txt = "更新於 " + agoText(st.newest) + "前 · " + secsLeft() + " 秒後自動更新";
+      cls = "dot live";
+    }
+
+    view.el.dot.className = cls;
+    view.el.txt.textContent = txt;
+  }
+
+  function setPlaceholder(view, list) {
+    if (list.length) return;
+
+    const st = viewState(view);
+
+    if (st.err) {
+      placeholder(view, "無法取得即時資料",
+        st.newest
+          ? "正在重試，暫時顯示 " + agoText(st.newest) + " 前的更新。"
+          : "Citybus 開放數據暫時無法連接，會自動重試。");
+      return;
+    }
+
+    if (!st.allLive) {
+      placeholder(view, "連接 Citybus…", "正在取得下一班班次。");
+      return;
+    }
+
+    if (view.key === "ret" && prefs.filter !== "ALL") {
+      placeholder(view, prefs.filter + " 目前沒有預定班次", "可能已收車或暫停服務，可切回「全部」看其他路線。");
+      return;
+    }
+
+    const [msg, sub] = emptyCopy();
+    placeholder(view, msg, sub);
+  }
+
+  /* ------------------------------ alerts ------------------------------ */
+  const alerted = new Set();
+  let audio = null;
+  let bannerTimer = 0;
+
+  function beep() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audio = audio || new AC();
+      if (audio.state === "suspended") audio.resume();
+
+      const t0 = audio.currentTime;
+      [[0, 660], [0.24, 880]].forEach(([off, hz]) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = "sine";
+        osc.frequency.value = hz;
+        gain.gain.setValueAtTime(0.0001, t0 + off);
+        gain.gain.exponentialRampToValueAtTime(0.22, t0 + off + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + off + 0.2);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(t0 + off);
+        osc.stop(t0 + off + 0.24);
+      });
+    } catch {}
+  }
+
+  function buzz(pattern) {
+    if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch {} }
+  }
+
+  function showBanner(html) {
+    el.banner.innerHTML = html;
+    el.banner.classList.add("show");
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => {
+      el.banner.classList.remove("show");
+      el.banner.textContent = "";
+    }, 7000);
+  }
+
+  function checkAlerts() {
+    if (!prefs.alertMins) return;
+
+    const lists = [
+      { view: VIEWS.out, list: outboundList() },
+      { view: VIEWS.ret, list: inboundList() },
+    ];
+
+    for (const { view, list } of lists) {
+      for (const e of list) {
+        const mins = minutesLeft(e.ms);
+        if (mins < 0 || mins > prefs.alertMins) continue;
+
+        const id = view.key + "|" + e.route + "|" + e.ms;
+        if (alerted.has(id)) continue;
+        alerted.add(id);
+
+        const where = view.key === "out" ? "富泰邨開出" : "深圳灣口岸開出";
+        showBanner(`<b>${e.route}</b> ${Math.max(0, Math.floor(mins))} 分鐘後到 · ${where}`);
+
+        beep();
+        buzz([180, 90, 180]);
+        return;   // 一次只提醒一班，避免連環響
+      }
+    }
+  }
+
+  /* ------------------------------ render ------------------------------ */
+  function render() {
+    const out = outboundList();
+    const ret = inboundList();
+
+    paint(VIEWS.out, out, false);
+    paint(VIEWS.ret, ret, true);
+    setPlaceholder(VIEWS.out, out);
+    setPlaceholder(VIEWS.ret, ret);
+
+    setStatus(VIEWS.out, out);
+    setStatus(VIEWS.ret, ret);
+
+    let newestFeed = 0;
+    feeds.forEach(f => { if (f.okAt > newestFeed) newestFeed = f.okAt; });
+    el.feed.textContent = newestFeed ? clockSec.format(new Date(newestFeed)) : "–";
 
     const left = nextAllAt - Date.now();
     el.bar.style.width = (100 - Math.max(0, Math.min(1, left / REFRESH_MS)) * 100).toFixed(1) + "%";
+
+    checkAlerts();
   }
 
   /* ------------------------------ wiring ------------------------------ */
-  el.refresh.addEventListener("click", () => {
-    el.refresh.disabled = true;
-    loadAll().then(() => { el.refresh.disabled = false; });
+  function applyPrefs() {
+    document.documentElement.dataset.text = prefs.big ? "lg" : "sm";
+    el.bigBtn.setAttribute("aria-pressed", String(!!prefs.big));
+    el.bigLabel.textContent = prefs.big ? "大字開" : "大字";
+
+    const on = prefs.alertMins > 0;
+    el.alertBtn.setAttribute("aria-pressed", String(on));
+    el.alertLabel.textContent = on ? "提醒 " + prefs.alertMins + " 分" : "提醒關閉";
+
+    if (VIEWS.ret.el.chipRow) {
+      [...VIEWS.ret.el.chipRow.children].forEach(b => {
+        b.setAttribute("aria-pressed", String(b.dataset.id === prefs.filter));
+      });
+    }
+  }
+
+  el.bigBtn.addEventListener("click", () => {
+    prefs.big = !prefs.big;
+    savePrefs();
+    applyPrefs();
   });
+
+  el.alertBtn.addEventListener("click", () => {
+    // 0 → 3 → 5 → 10 → 0
+    const steps = [0, 3, 5, 10];
+    const i = steps.indexOf(prefs.alertMins);
+    prefs.alertMins = steps[(i + 1) % steps.length];
+    savePrefs();
+    applyPrefs();
+
+    if (prefs.alertMins) {
+      beep();                    // 使用者手勢內解鎖音訊
+      buzz(30);
+      showBanner(`已開啟提醒：<b>${prefs.alertMins}</b> 分鐘前響一次（需保持此頁開啟）`);
+    }
+  });
+
+  if (VIEWS.ret.el.chipRow) {
+    VIEWS.ret.el.chipRow.addEventListener("click", ev => {
+      const b = ev.target.closest(".chip");
+      if (!b) return;
+      prefs.filter = b.dataset.id;
+      savePrefs();
+      applyPrefs();
+      render();
+      buzz(10);
+    });
+  }
+
+  function manualRefresh() {
+    el.refresh.disabled = true;
+    return loadAll().then(() => { el.refresh.disabled = false; });
+  }
+
+  el.refresh.addEventListener("click", manualRefresh);
+
+  /* ---------- pull to refresh（只在頁面頂部往下拉時生效）---------- */
+  (() => {
+    let startY = 0, pulling = false, armed = false;
+    const THRESHOLD = 72;
+
+    document.addEventListener("touchstart", ev => {
+      if (window.scrollY > 0 || ev.touches.length !== 1) return;
+      startY = ev.touches[0].clientY;
+      pulling = true;
+      armed = false;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", ev => {
+      if (!pulling) return;
+      const dy = ev.touches[0].clientY - startY;
+      if (dy <= 0) { el.ptr.style.height = "0px"; armed = false; return; }
+
+      const pull = Math.min(dy, 110);
+      el.ptr.style.height = pull + "px";
+      armed = pull >= THRESHOLD;
+      el.ptrText.textContent = armed ? "鬆手刷新" : "下拉刷新";
+      if (dy > 12) ev.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("touchend", () => {
+      if (!pulling) return;
+      pulling = false;
+      el.ptr.style.height = "0px";
+      if (armed) {
+        armed = false;
+        buzz(12);
+        manualRefresh();
+      }
+    }, { passive: true });
+  })();
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && boards.some(b => Date.now() - b.lastOkAt > REFRESH_MS)) loadAll();
+    if (!document.hidden && Date.now() - nextAllAt > 0) loadAll();
   });
 
-  loadAll();                            // first fetch, both directions
-  setInterval(loadAll, REFRESH_MS);     // re-poll every 30 s
-  setInterval(render, 1000);            // tick the countdowns locally
+  applyPrefs();
+  render();                             // 先用快取畫一次，再抓即時資料
+  loadAll();
+  setInterval(loadAll, REFRESH_MS);
+  setInterval(render, 1000);
 })();
 </script>
 </body>
