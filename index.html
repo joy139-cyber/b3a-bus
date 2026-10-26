@@ -714,7 +714,7 @@
       ? ["003261|B3A"]
       : RET_ORDER.map(id => "003208|" + id);
 
-    let any = false, allLive = true, err = null, newest = 0, anyCache = false;
+    let any = false, allLive = true, err = null, newest = 0, cacheNewest = 0;
 
     ids.forEach(k => {
       const f = feeds.get(k);
@@ -722,13 +722,13 @@
       any = true;
       if (!f.liveAt) {
         allLive = false;
-        if (f.okAt) anyCache = true;   // 這筆是從 localStorage 還原的
+        if (f.okAt > cacheNewest) cacheNewest = f.okAt;   // 這筆是從 localStorage 還原的
       }
       if (f.error && !err) err = f.error;
       if (f.okAt > newest) newest = f.okAt;
     });
 
-    return { any, allLive, err, newest, anyCache };
+    return { any, allLive, err, newest, cacheNewest };
   }
 
   function emptyCopy() {
@@ -750,8 +750,8 @@
       txt = "連線中斷 — 顯示 " + agoText(st.newest) + " 前的資料，重試中";
       cls = "dot warn";
     } else if (!st.allLive && st.newest) {
-      txt = st.anyCache
-        ? "顯示上次資料（" + agoText(st.newest) + "前）· 正在更新"
+      txt = st.cacheNewest
+        ? "顯示上次資料（" + agoText(st.cacheNewest) + "前）· 正在更新"
         : "更新中…";
       cls = "dot warn";
     } else if (!st.allLive) {
